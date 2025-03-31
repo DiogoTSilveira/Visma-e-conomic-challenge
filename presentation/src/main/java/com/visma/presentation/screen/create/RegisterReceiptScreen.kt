@@ -1,8 +1,5 @@
 package com.visma.presentation.screen.create
 
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
@@ -33,22 +31,23 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.visma.presentation.R
 import com.visma.presentation.component.camera.PhotoCamera
 import com.visma.presentation.component.image.AsyncImageWithLoader
+import com.visma.presentation.component.picker.CurrencyPickerModal
 import com.visma.presentation.component.picker.DatePickerModal
+import com.visma.presentation.extension.clickableArea
 import com.visma.presentation.extension.toBase64
 import com.visma.presentation.extension.uriToBitmap
 import com.visma.presentation.screen.create.RegisterReceiptUiState.Error
@@ -104,15 +103,17 @@ private fun RegisterReceiptContent(
     onFormatDate: (dateInMillis: Long) -> String?
 ) {
     val context = LocalContext.current
+
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
 
-    var receiptPhoto by rememberSaveable { mutableStateOf("") }
+    var receiptPhoto by remember { mutableStateOf("") }
     var selectedDate by remember { mutableStateOf<String?>(null) }
-    var totalAmount by rememberSaveable { mutableStateOf("") }
-    var currency by rememberSaveable { mutableStateOf("") }
-    var showDatePicker by remember { mutableStateOf(false) }
+    var totalAmount by remember { mutableStateOf(TextFieldValue("")) }
+    var selectedCurrency by remember { mutableStateOf("") }
 
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showCurrencyPicker by remember { mutableStateOf(false) }
     val takePicture = remember { mutableStateOf(false) }
 
     Column(
@@ -147,24 +148,17 @@ private fun RegisterReceiptContent(
         OutlinedTextField(
             modifier = Modifier
                 .fillMaxWidth()
-                .pointerInput(selectedDate) {
-                    awaitEachGesture {
-                        // Modifier.clickable doesn't work for text fields, so we use Modifier.pointerInput
-                        // in the Initial pass to observe events before the text field consumes them
-                        // in the Main pass.
-                        awaitFirstDown(pass = PointerEventPass.Initial)
-                        val upEvent = waitForUpOrCancellation(pass = PointerEventPass.Initial)
-                        if (upEvent != null) {
-                            showDatePicker = true
-                        }
-                    }
+                .clickableArea(selectedDate) {
+                    showDatePicker = true
                 },
             value = selectedDate.orEmpty(),
             onValueChange = {},
-            label = { Text(text = stringResource(R.string.date_label)) },
-            placeholder = { Text(text = stringResource(R.string.select_date_label)) },
-            singleLine = true,
-            readOnly = true,
+            label = {
+                Text(text = stringResource(R.string.date_label))
+            },
+            placeholder = {
+                Text(text = stringResource(R.string.select_date_label))
+            },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Outlined.DateRange,
@@ -172,29 +166,43 @@ private fun RegisterReceiptContent(
                 )
             },
             shape = RoundedCornerShape(25.dp),
+            singleLine = true,
+            readOnly = true
         )
 
         OutlinedTextField(
             modifier = Modifier.fillMaxWidth(),
             value = totalAmount,
-            onValueChange = { totalAmount = it },
-            label = { Text(text = stringResource(R.string.total_amount_label)) },
-            singleLine = true,
+            onValueChange = { value ->
+                totalAmount = value
+            },
+            label = {
+                Text(text = stringResource(R.string.total_amount_label))
+            },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.AttachMoney,
                     contentDescription = null
                 )
             },
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Number
+            ),
             shape = RoundedCornerShape(25.dp),
+            singleLine = true,
         )
 
         OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = currency,
-            onValueChange = { currency = it },
-            label = { Text(text = stringResource(R.string.currency_label)) },
-            singleLine = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickableArea(selectedDate) {
+                    showCurrencyPicker = true
+                },
+            value = selectedCurrency,
+            onValueChange = {},
+            label = {
+                Text(text = stringResource(R.string.currency_label))
+            },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Outlined.AttachMoney,
@@ -202,6 +210,8 @@ private fun RegisterReceiptContent(
                 )
             },
             shape = RoundedCornerShape(25.dp),
+            singleLine = true,
+            readOnly = true
         )
 
         OutlinedButton(
@@ -227,6 +237,19 @@ private fun RegisterReceiptContent(
             },
             onDismiss = {
                 showDatePicker = false
+            }
+        )
+    }
+
+    if (showCurrencyPicker) {
+        CurrencyPickerModal(
+            selectedCurrency = selectedCurrency,
+            onCurrencySelected = { currency ->
+                selectedCurrency = currency
+                showCurrencyPicker = false
+            },
+            onDismiss = {
+                showCurrencyPicker = false
             }
         )
     }

@@ -75,7 +75,10 @@ fun ReceiptListScreen(
                 }
 
                 is Success -> {
-                    ReceiptListContent(receipts = (uiState as Success).data)
+                    ReceiptListContent(
+                        receipts = (uiState as Success).data,
+                        onNavigateToAddReceipt = onNavigateToAddReceipt
+                    )
                 }
 
                 is Error -> {
@@ -93,9 +96,18 @@ fun ReceiptListScreen(
 }
 
 @Composable
-fun ReceiptListContent(receipts: List<Receipt>) {
+fun ReceiptListContent(
+    receipts: List<Receipt>,
+    onNavigateToAddReceipt: () -> Unit
+) {
     if (receipts.isEmpty()) {
-        EmptyStateContent()
+        EmptyState(
+            image = painterResource(id = R.drawable.illustration_check_receipt),
+            title = "No receipts registered",
+            message = "You will see your receipts here once you start register them.",
+            buttonText = "Register receipt",
+            onButtonClick = onNavigateToAddReceipt
+        )
         return
     }
 
