@@ -6,4 +6,4 @@ import kotlinx.serialization.Serializable
 object ReceiptList
 
 @Serializable
-object CreateReceipt
+data class RegisterReceipt(val id: Long? = null)

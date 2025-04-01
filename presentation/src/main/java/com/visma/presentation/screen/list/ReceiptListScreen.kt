@@ -1,9 +1,8 @@
 package com.visma.presentation.screen.list
 
-import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,6 +30,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
@@ -39,22 +39,31 @@ import com.visma.domain.receipt.model.Receipt
 import com.visma.presentation.R
 import com.visma.presentation.component.image.AsyncImageWithLoader
 import com.visma.presentation.component.state.EmptyState
+import com.visma.presentation.extension.loadBitmapFromInternalStorage
 import com.visma.presentation.screen.list.ReceiptListUiState.Error
 import com.visma.presentation.screen.list.ReceiptListUiState.Loading
 import com.visma.presentation.screen.list.ReceiptListUiState.Success
-import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReceiptListScreen(
     viewModel: ReceiptListViewModel = hiltViewModel(),
-    onNavigateToAddReceipt: () -> Unit
+    onNavigateToAddReceipt: () -> Unit,
+    onNavigateToEditReceipt: (id: Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(stringResource(R.string.receipts_title)) })
+            TopAppBar(
+                title = {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = stringResource(R.string.receipts_title),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            )
         },
         floatingActionButton = {
             FloatingActionButton(
@@ -81,6 +90,7 @@ fun ReceiptListScreen(
                     ReceiptListContent(
                         receipts = (uiState as Success).data,
                         onNavigateToAddReceipt = onNavigateToAddReceipt,
+                        onNavigateToEditReceipt = onNavigateToEditReceipt,
                         onFormatDate = viewModel::formatDate,
                         onFormatCurrency = viewModel::formatCurrency,
                     )
@@ -104,6 +114,7 @@ fun ReceiptListScreen(
 fun ReceiptListContent(
     receipts: List<Receipt>,
     onNavigateToAddReceipt: () -> Unit,
+    onNavigateToEditReceipt: (id: Long) -> Unit,
     onFormatDate: (dateInMillis: Long) -> String?,
     onFormatCurrency: (amount: Double, currency: String) -> String
 
@@ -111,9 +122,9 @@ fun ReceiptListContent(
     if (receipts.isEmpty()) {
         EmptyState(
             image = painterResource(id = R.drawable.illustration_check_receipt),
-            title = "No receipts registered",
-            message = "You will see your receipts here once you start register them.",
-            buttonText = "Register receipt",
+            title = stringResource(R.string.no_receipts_registered_title),
+            message = stringResource(R.string.no_receipts_registered_message),
+            buttonText = stringResource(R.string.button_register_receipt),
             onButtonClick = onNavigateToAddReceipt
         )
         return
@@ -121,16 +132,18 @@ fun ReceiptListContent(
 
     val context = LocalContext.current
 
-    LazyColumn {
+    LazyColumn(
+        modifier = Modifier.padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
         items(receipts) { receipt ->
             ReceiptCard(
-                receiptImage = loadBitmapFromInternalStorage(
-                    context = context,
-                    id = receipt.id.toString()
-                ),
+                receiptImage = context.loadBitmapFromInternalStorage(id = receipt.id.toString()),
+                receiptId = receipt.id,
+                issuer = receipt.issuer,
                 date = onFormatDate(receipt.date),
                 totalAmount = onFormatCurrency(receipt.totalAmount, receipt.currency),
-                onReceiptSelected = {}
+                onReceiptSelected = { onNavigateToEditReceipt(receipt.id) }
             )
         }
     }
@@ -139,6 +152,8 @@ fun ReceiptListContent(
 @Composable
 fun ReceiptCard(
     receiptImage: Bitmap?,
+    receiptId: Long,
+    issuer: String,
     date: String?,
     totalAmount: String,
     onReceiptSelected: () -> Unit = {},
@@ -157,7 +172,7 @@ fun ReceiptCard(
             ConstraintLayout(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                val (imageRef, dateRef, amountRef) = createRefs()
+                val (imageRef, issuerRef, dateRef, amountRef) = createRefs()
 
                 AsyncImageWithLoader(
                     modifier = Modifier.constrainAs(imageRef) {
@@ -171,13 +186,13 @@ fun ReceiptCard(
                 Text(
                     modifier = Modifier
                         .padding(16.dp)
-                        .constrainAs(dateRef) {
+                        .constrainAs(issuerRef) {
                             top.linkTo(parent.top)
                             start.linkTo(imageRef.end)
                         },
-                    text = date.orEmpty(),
+                    text = issuer,
                     style = TextStyle(
-                        fontSize = 16.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
                 )
@@ -185,19 +200,28 @@ fun ReceiptCard(
                 Text(
                     modifier = Modifier
                         .padding(16.dp)
-                        .constrainAs(amountRef) {
+                        .constrainAs(dateRef) {
                             bottom.linkTo(parent.bottom)
+                            start.linkTo(imageRef.end)
+                        },
+                    text = stringResource(R.string.receipt_date_format, receiptId, date.orEmpty()),
+                    style = TextStyle(fontSize = 14.sp)
+                )
+
+                Text(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .constrainAs(amountRef) {
+                            top.linkTo(parent.top)
                             end.linkTo(parent.end)
                         },
                     text = totalAmount,
-                    style = TextStyle(fontSize = 12.sp)
+                    style = TextStyle(
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 )
             }
         }
     }
-}
-
-fun loadBitmapFromInternalStorage(context: Context, id: String): Bitmap? {
-    val file = File(context.filesDir, id)
-    return if (file.exists()) BitmapFactory.decodeFile(file.absolutePath) else null
 }

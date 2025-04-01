@@ -8,6 +8,7 @@ import java.util.Date
  */
 data class FormData(
     val image: Bitmap? = null,
+    val receiptId: Long? = null,
     val issuer: String = "",
     val date: Long = Date().time,
     val amount: String = "",

@@ -13,8 +13,11 @@ class ReceiptRepositoryImpl @Inject constructor(
     private val receiptDao: ReceiptDao
 ) : ReceiptRepository {
 
-    override fun getAllNotes(): Flow<List<Receipt>> =
+    override fun getAllReceipts(): Flow<List<Receipt>> =
         receiptDao.getAllReceipts().mapToReceiptList()
+
+    override suspend fun getReceipt(id: Long): Receipt =
+        receiptDao.getReceipt(id).mapToReceipt()
 
     override suspend fun createReceipt(note: NewReceipt) =
         receiptDao.insertReceipt(note.mapToReceiptEntity())
@@ -37,6 +40,14 @@ private fun Flow<List<ReceiptEntity>>.mapToReceiptList() = map { list ->
         )
     }
 }
+
+private fun ReceiptEntity.mapToReceipt() = Receipt(
+    id = id,
+    issuer = issuer,
+    date = date,
+    totalAmount = totalAmount,
+    currency = currency
+)
 
 private fun Receipt.mapToReceiptEntity() = ReceiptEntity(
     id = id,

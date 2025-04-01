@@ -8,10 +8,14 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 
 fun Modifier.clickableArea(
-    key1: Any?,
+    key: Any?,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ): Modifier {
-    return pointerInput(key1) {
+    if (!enabled) {
+        return this
+    }
+    return pointerInput(key) {
         awaitEachGesture {
             // Modifier.clickable doesn't work for text fields, so we use Modifier.pointerInput
             // in the Initial pass to observe events before the text field consumes them

@@ -9,20 +9,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.outlined.AttachMoney
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -38,18 +37,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.visma.presentation.R
 import com.visma.presentation.component.camera.PhotoCamera
+import com.visma.presentation.component.field.TextField
 import com.visma.presentation.component.image.AsyncImageWithLoader
 import com.visma.presentation.component.picker.CurrencyPickerModal
 import com.visma.presentation.component.picker.DatePickerModal
 import com.visma.presentation.extension.clickableArea
 import com.visma.presentation.extension.uriToBitmap
 import com.visma.presentation.screen.create.RegisterReceiptUiState.Error
+import com.visma.presentation.screen.create.RegisterReceiptUiState.Initialized
 import com.visma.presentation.screen.create.RegisterReceiptUiState.Submitting
 import com.visma.presentation.screen.create.RegisterReceiptUiState.Success
 import com.visma.presentation.screen.create.model.FormData
@@ -65,7 +67,22 @@ fun RegisterReceiptScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Register receipt") })
+            TopAppBar(
+                title = {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = stringResource(R.string.register_receipt_title),
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onClose) {
+                        Icon(
+                            imageVector = Icons.Default.ChevronLeft,
+                            contentDescription = null
+                        )
+                    }
+                }
+            )
         },
     ) { padding ->
         when (uiState) {
@@ -87,13 +104,18 @@ fun RegisterReceiptScreen(
                 )
             }
 
-            else -> {
+            is Initialized -> {
+                val data = (uiState as Initialized).data
+
                 RegisterReceiptContent(
                     modifier = Modifier.padding(padding),
+                    data = data,
                     onFormatDate = viewModel::formatDate,
                     onSubmit = viewModel::submit
                 )
             }
+
+            else -> Unit
         }
     }
 }
@@ -101,6 +123,7 @@ fun RegisterReceiptScreen(
 @Composable
 private fun RegisterReceiptContent(
     modifier: Modifier,
+    data: FormData,
     onFormatDate: (dateInMillis: Long?) -> String?,
     onSubmit: (data: FormData) -> Unit
 ) {
@@ -108,7 +131,8 @@ private fun RegisterReceiptContent(
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
 
-    var formData by remember { mutableStateOf(FormData()) }
+    var formData by remember(data) { mutableStateOf(data) }
+    val isViewingDetails = formData.receiptId != null
 
     var showDatePicker by remember { mutableStateOf(false) }
     var showCurrencyPicker by remember { mutableStateOf(false) }
@@ -132,108 +156,76 @@ private fun RegisterReceiptContent(
             )
         }
 
-        OutlinedButton(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { takePicture.value = true },
-            content = {
-                Text(
-                    modifier = Modifier.padding(8.dp),
-                    text = stringResource(R.string.button_take_photo)
-                )
-            }
-        )
+        if (!isViewingDetails) {
+            OutlinedButton(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { takePicture.value = true },
+                content = {
+                    Text(
+                        modifier = Modifier.padding(8.dp),
+                        text = stringResource(R.string.button_take_photo)
+                    )
+                }
+            )
+        }
 
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
+        TextField(
+            icon = Icons.Default.Receipt,
             value = formData.issuer,
-            onValueChange = { value ->
-                formData = formData.copy(issuer = value)
-            },
-            label = {
-                Text(text = stringResource(R.string.issuer_label))
-            },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Receipt,
-                    contentDescription = null
-                )
-            },
-            shape = RoundedCornerShape(25.dp),
-            singleLine = true
+            label = stringResource(R.string.issuer_label),
+            onValueChange = { value -> formData = formData.copy(issuer = value) },
+            keyboardOptions = KeyboardOptions.Default.copy(
+                capitalization = KeyboardCapitalization.Words
+            ),
+            enabled = !isViewingDetails
         )
 
-        OutlinedTextField(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickableArea(formData.date) {
-                    showDatePicker = true
-                },
+        TextField(
+            modifier = Modifier.clickableArea(
+                key = formData.date,
+                enabled = !isViewingDetails
+            ) {
+                showDatePicker = true
+            },
+            icon = Icons.Outlined.DateRange,
             value = onFormatDate(formData.date).orEmpty(),
-            onValueChange = {},
-            label = {
-                Text(text = stringResource(R.string.date_label))
-            },
-            placeholder = {
-                Text(text = stringResource(R.string.select_date_label))
-            },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Outlined.DateRange,
-                    contentDescription = null
-                )
-            },
-            shape = RoundedCornerShape(25.dp),
-            singleLine = true,
-            readOnly = true
+            label = stringResource(R.string.date_label),
+            readOnly = true,
+            enabled = !isViewingDetails
         )
 
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
+        TextField(
+            icon = Icons.Outlined.DateRange,
             value = formData.amount,
+            label = stringResource(R.string.total_amount_label),
             onValueChange = { value ->
                 formData = formData.copy(amount = value)
-            },
-            label = {
-                Text(text = stringResource(R.string.total_amount_label))
-            },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.AttachMoney,
-                    contentDescription = null
-                )
             },
             keyboardOptions = KeyboardOptions.Default.copy(
                 keyboardType = KeyboardType.Number
             ),
-            shape = RoundedCornerShape(25.dp),
-            singleLine = true,
+            enabled = !isViewingDetails
         )
 
-        OutlinedTextField(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickableArea(formData.currency) {
-                    showCurrencyPicker = true
-                },
+        TextField(
+            modifier = Modifier.clickableArea(
+                key = formData.currency,
+                enabled = !isViewingDetails
+            ) {
+                showCurrencyPicker = true
+            },
+            icon = Icons.Outlined.AttachMoney,
             value = formData.currency,
-            onValueChange = {},
-            label = {
-                Text(text = stringResource(R.string.currency_label))
-            },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Outlined.AttachMoney,
-                    contentDescription = null
-                )
-            },
-            shape = RoundedCornerShape(25.dp),
-            singleLine = true,
-            readOnly = true
+            label = stringResource(R.string.currency_label),
+            readOnly = true,
+            enabled = !isViewingDetails
         )
 
         OutlinedButton(
             modifier = Modifier.fillMaxWidth(),
-            onClick = { onSubmit(formData) },
+            onClick = {
+                onSubmit(formData)
+            },
             content = {
                 Text(
                     modifier = Modifier.padding(8.dp),
@@ -288,6 +280,7 @@ fun RegisterReceiptContentPreview() {
     VismaEConomicTheme {
         RegisterReceiptContent(
             modifier = Modifier.padding(16.dp),
+            data = FormData(),
             onFormatDate = { "31/03/2025" },
             onSubmit = {}
         )

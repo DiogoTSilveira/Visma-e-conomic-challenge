@@ -3,11 +3,19 @@ package com.visma.presentation.screen.create
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import com.visma.domain.receipt.usecase.CreateReceiptUseCase
 import com.visma.domain.receipt.usecase.FormatDateUseCase
+import com.visma.domain.receipt.usecase.GetReceiptUseCase
+import com.visma.presentation.extension.loadBitmapFromInternalStorage
+import com.visma.presentation.navigation.RegisterReceipt
+import com.visma.presentation.screen.create.RegisterReceiptUiState.Error
 import com.visma.presentation.screen.create.RegisterReceiptUiState.Idle
+import com.visma.presentation.screen.create.RegisterReceiptUiState.Submitting
+import com.visma.presentation.screen.create.RegisterReceiptUiState.Success
 import com.visma.presentation.screen.create.model.FormData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -22,6 +30,8 @@ import javax.inject.Inject
 @HiltViewModel
 class RegisterReceiptViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val savedStateHandle: SavedStateHandle,
+    private val getReceiptUseCase: GetReceiptUseCase,
     private val createReceiptUseCase: CreateReceiptUseCase,
     private val formatDateUseCase: FormatDateUseCase
 ) : ViewModel() {
@@ -29,16 +39,58 @@ class RegisterReceiptViewModel @Inject constructor(
     private val _uiState: MutableStateFlow<RegisterReceiptUiState> = MutableStateFlow(Idle)
     val uiState = _uiState.asStateFlow()
 
+    private fun updateState(state: RegisterReceiptUiState) {
+        _uiState.update { state }
+    }
+
+    init {
+        checkReceiptForEdit()
+    }
+
+    private fun checkReceiptForEdit() {
+        val arguments = savedStateHandle.toRoute<RegisterReceipt>()
+        val receiptId = arguments.id
+
+        if (receiptId == null) {
+            updateState(RegisterReceiptUiState.Initialized())
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val receipt = getReceiptUseCase.invoke(receiptId)
+
+                updateState(
+                    RegisterReceiptUiState.Initialized(
+                        data = FormData(
+                            image = context.loadBitmapFromInternalStorage(id = receiptId.toString()),
+                            receiptId = receiptId,
+                            issuer = receipt.issuer,
+                            date = receipt.date,
+                            amount = receipt.totalAmount.toString(),
+                            currency = receipt.currency
+                        )
+                    )
+                )
+            } catch (exception: Exception) {
+                Log.e(
+                    RegisterReceiptViewModel::class.java.simpleName,
+                    exception.message.orEmpty()
+                )
+            }
+        }
+    }
+
     fun submit(data: FormData) {
         viewModelScope.launch {
-            _uiState.update { RegisterReceiptUiState.Submitting }
+            updateState(Submitting)
 
             try {
                 val receiptId = createReceiptUseCase.invoke(
                     date = data.date,
-                    issuer = data.issuer,
+                    issuer = data.issuer.trim(),
                     amount = data.amount.toDouble(),
-                    currency = data.currency
+                    currency = data.currency.trim()
                 )
 
                 saveBitmapToInternalStorage(
@@ -46,10 +98,10 @@ class RegisterReceiptViewModel @Inject constructor(
                     fileName = receiptId.toString()
                 )
 
-                _uiState.update { RegisterReceiptUiState.Success }
+                updateState(Success)
             } catch (exception: Exception) {
                 Log.e(RegisterReceiptViewModel::class.java.simpleName, exception.message.orEmpty())
-                _uiState.update { RegisterReceiptUiState.Error(exception.message.orEmpty()) }
+                updateState(Error(exception.message.orEmpty()))
             }
         }
     }
@@ -63,6 +115,9 @@ class RegisterReceiptViewModel @Inject constructor(
             bitmap?.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
         }
 
-        Log.d("Storage", "Receipt image store at: ${file.absolutePath}")
+        Log.d(
+            RegisterReceiptViewModel::class.java.simpleName,
+            "Receipt image store at: ${file.absolutePath}"
+        )
     }
 }

@@ -3,8 +3,8 @@ package com.visma.domain.receipt.usecase
 import com.visma.domain.receipt.repository.ReceiptRepository
 import javax.inject.Inject
 
-class GetAllReceiptsUseCase @Inject constructor(
+class GetReceiptUseCase @Inject constructor(
     private val repository: ReceiptRepository
 ) {
-    operator fun invoke() = repository.getAllReceipts()
+    suspend operator fun invoke(id: Long) = repository.getReceipt(id)
 }

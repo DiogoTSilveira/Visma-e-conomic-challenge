@@ -3,8 +3,12 @@
 
     <!-- List -->
     <string name="receipts_title">Receipts</string>
+    <string name="receipt_date_format">Receipt %1$s • %2$s</string>
+    <string name="no_receipts_registered_title">No receipts registered</string>
+    <string name="no_receipts_registered_message">You will see your receipts here once you start register them.</string>
 
     <!-- Register -->
+    <string name="register_receipt_title">Register new receipt</string>
     <string name="issuer_label">Issuer</string>
     <string name="date_label">Date</string>
     <string name="select_date_label">Select a date</string>
