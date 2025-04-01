@@ -1,6 +1,6 @@
 package com.visma.presentation.component.image
 
-import android.webkit.URLUtil
+import android.graphics.Bitmap
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -29,7 +29,6 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.CachePolicy.DISABLED
 import coil.request.ImageRequest
 import coil.size.Size
-import com.visma.presentation.extension.base64ToBitmap
 import com.visma.presentation.theme.ErrorColor
 
 data class IconConfiguration(
@@ -41,13 +40,13 @@ data class IconConfiguration(
 fun AsyncImageWithLoader(
     modifier: Modifier = Modifier,
     iconConfiguration: IconConfiguration? = null,
-    image: String?,
+    image: Bitmap?,
     height: Dp = 150.dp,
     width: Dp = 100.dp
 ) {
     val painter = rememberAsyncImagePainter(
         model = ImageRequest.Builder(LocalContext.current)
-            .data(if (URLUtil.isValidUrl(image)) image else image?.base64ToBitmap())
+            .data(image)
             .crossfade(true)
             .size(Size.ORIGINAL)
             .diskCachePolicy(DISABLED)

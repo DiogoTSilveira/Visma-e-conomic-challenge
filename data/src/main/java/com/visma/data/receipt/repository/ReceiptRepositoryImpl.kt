@@ -30,22 +30,25 @@ private fun Flow<List<ReceiptEntity>>.mapToReceiptList() = map { list ->
     list.map { entity ->
         Receipt(
             id = entity.id,
-            photoPath = entity.photoPath,
+            issuer = entity.issuer,
             date = entity.date,
-            totalAmount = entity.totalAmount
+            totalAmount = entity.totalAmount,
+            currency = entity.currency
         )
     }
 }
 
 private fun Receipt.mapToReceiptEntity() = ReceiptEntity(
     id = id,
-    photoPath = photoPath,
+    issuer = issuer,
     date = date,
-    totalAmount = totalAmount
+    totalAmount = totalAmount,
+    currency = currency
 )
 
 private fun NewReceipt.mapToReceiptEntity() = ReceiptEntity(
-    photoPath = photoPath,
+    issuer = issuer,
     date = date,
-    totalAmount = totalAmount
+    totalAmount = totalAmount,
+    currency = currency
 )

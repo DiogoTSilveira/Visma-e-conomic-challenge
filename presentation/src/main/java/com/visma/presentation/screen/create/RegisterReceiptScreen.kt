@@ -14,6 +14,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.outlined.AttachMoney
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material3.CircularProgressIndicator
@@ -38,7 +39,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -48,11 +48,11 @@ import com.visma.presentation.component.image.AsyncImageWithLoader
 import com.visma.presentation.component.picker.CurrencyPickerModal
 import com.visma.presentation.component.picker.DatePickerModal
 import com.visma.presentation.extension.clickableArea
-import com.visma.presentation.extension.toBase64
 import com.visma.presentation.extension.uriToBitmap
 import com.visma.presentation.screen.create.RegisterReceiptUiState.Error
 import com.visma.presentation.screen.create.RegisterReceiptUiState.Submitting
 import com.visma.presentation.screen.create.RegisterReceiptUiState.Success
+import com.visma.presentation.screen.create.model.FormData
 import com.visma.presentation.theme.VismaEConomicTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -90,7 +90,8 @@ fun RegisterReceiptScreen(
             else -> {
                 RegisterReceiptContent(
                     modifier = Modifier.padding(padding),
-                    onFormatDate = viewModel::formatDate
+                    onFormatDate = viewModel::formatDate,
+                    onSubmit = viewModel::submit
                 )
             }
         }
@@ -100,17 +101,14 @@ fun RegisterReceiptScreen(
 @Composable
 private fun RegisterReceiptContent(
     modifier: Modifier,
-    onFormatDate: (dateInMillis: Long) -> String?
+    onFormatDate: (dateInMillis: Long?) -> String?,
+    onSubmit: (data: FormData) -> Unit
 ) {
     val context = LocalContext.current
-
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
 
-    var receiptPhoto by remember { mutableStateOf("") }
-    var selectedDate by remember { mutableStateOf<String?>(null) }
-    var totalAmount by remember { mutableStateOf(TextFieldValue("")) }
-    var selectedCurrency by remember { mutableStateOf("") }
+    var formData by remember { mutableStateOf(FormData()) }
 
     var showDatePicker by remember { mutableStateOf(false) }
     var showCurrencyPicker by remember { mutableStateOf(false) }
@@ -128,7 +126,7 @@ private fun RegisterReceiptContent(
             contentAlignment = Alignment.Center
         ) {
             AsyncImageWithLoader(
-                image = receiptPhoto,
+                image = formData.image,
                 width = screenWidth,
                 height = 300.dp
             )
@@ -146,12 +144,31 @@ private fun RegisterReceiptContent(
         )
 
         OutlinedTextField(
+            modifier = Modifier.fillMaxWidth(),
+            value = formData.issuer,
+            onValueChange = { value ->
+                formData = formData.copy(issuer = value)
+            },
+            label = {
+                Text(text = stringResource(R.string.issuer_label))
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Receipt,
+                    contentDescription = null
+                )
+            },
+            shape = RoundedCornerShape(25.dp),
+            singleLine = true
+        )
+
+        OutlinedTextField(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickableArea(selectedDate) {
+                .clickableArea(formData.date) {
                     showDatePicker = true
                 },
-            value = selectedDate.orEmpty(),
+            value = onFormatDate(formData.date).orEmpty(),
             onValueChange = {},
             label = {
                 Text(text = stringResource(R.string.date_label))
@@ -172,9 +189,9 @@ private fun RegisterReceiptContent(
 
         OutlinedTextField(
             modifier = Modifier.fillMaxWidth(),
-            value = totalAmount,
+            value = formData.amount,
             onValueChange = { value ->
-                totalAmount = value
+                formData = formData.copy(amount = value)
             },
             label = {
                 Text(text = stringResource(R.string.total_amount_label))
@@ -195,10 +212,10 @@ private fun RegisterReceiptContent(
         OutlinedTextField(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickableArea(selectedDate) {
+                .clickableArea(formData.currency) {
                     showCurrencyPicker = true
                 },
-            value = selectedCurrency,
+            value = formData.currency,
             onValueChange = {},
             label = {
                 Text(text = stringResource(R.string.currency_label))
@@ -216,13 +233,14 @@ private fun RegisterReceiptContent(
 
         OutlinedButton(
             modifier = Modifier.fillMaxWidth(),
-            onClick = { takePicture.value = true },
+            onClick = { onSubmit(formData) },
             content = {
                 Text(
                     modifier = Modifier.padding(8.dp),
                     text = stringResource(R.string.button_register_receipt)
                 )
-            }
+            },
+            enabled = formData.isValid()
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -232,7 +250,7 @@ private fun RegisterReceiptContent(
         DatePickerModal(
             onDateSelected = { date ->
                 date?.let {
-                    selectedDate = onFormatDate(it)
+                    formData = formData.copy(date = it)
                 }
             },
             onDismiss = {
@@ -243,9 +261,9 @@ private fun RegisterReceiptContent(
 
     if (showCurrencyPicker) {
         CurrencyPickerModal(
-            selectedCurrency = selectedCurrency,
+            selectedCurrency = formData.currency,
             onCurrencySelected = { currency ->
-                selectedCurrency = currency
+                formData = formData.copy(currency = currency)
                 showCurrencyPicker = false
             },
             onDismiss = {
@@ -257,10 +275,8 @@ private fun RegisterReceiptContent(
     PhotoCamera(
         modifier = Modifier.fillMaxSize(),
         takePicture = takePicture,
-        onPhotoTaken = {
-            context.uriToBitmap(it)?.let { bitmap ->
-                receiptPhoto = bitmap.toBase64()
-            }
+        onPhotoTaken = { uri ->
+            formData = formData.copy(image = context.uriToBitmap(uri))
         },
         onCancel = { takePicture.value = false }
     )
@@ -272,7 +288,8 @@ fun RegisterReceiptContentPreview() {
     VismaEConomicTheme {
         RegisterReceiptContent(
             modifier = Modifier.padding(16.dp),
-            onFormatDate = { "31/03/2025" }
+            onFormatDate = { "31/03/2025" },
+            onSubmit = {}
         )
     }
 }

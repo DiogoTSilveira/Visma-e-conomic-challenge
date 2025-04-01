@@ -7,9 +7,11 @@ import javax.inject.Inject
 
 class FormatDateUseCase @Inject constructor() {
 
-    operator fun invoke(dateInMillis: Long): String? {
-        val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-        return formatter.format(Date(dateInMillis))
+    operator fun invoke(dateInMillis: Long?): String? {
+        return dateInMillis?.let {
+            val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+            formatter.format(Date(it))
+        }
     }
 
 }

@@ -1,7 +1,9 @@
 package com.visma.presentation.screen.list
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -31,7 +34,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.constraintlayout.compose.Dimension
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.visma.domain.receipt.model.Receipt
 import com.visma.presentation.R
@@ -40,6 +42,7 @@ import com.visma.presentation.component.state.EmptyState
 import com.visma.presentation.screen.list.ReceiptListUiState.Error
 import com.visma.presentation.screen.list.ReceiptListUiState.Loading
 import com.visma.presentation.screen.list.ReceiptListUiState.Success
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,7 +80,9 @@ fun ReceiptListScreen(
                 is Success -> {
                     ReceiptListContent(
                         receipts = (uiState as Success).data,
-                        onNavigateToAddReceipt = onNavigateToAddReceipt
+                        onNavigateToAddReceipt = onNavigateToAddReceipt,
+                        onFormatDate = viewModel::formatDate,
+                        onFormatCurrency = viewModel::formatCurrency,
                     )
                 }
 
@@ -98,7 +103,10 @@ fun ReceiptListScreen(
 @Composable
 fun ReceiptListContent(
     receipts: List<Receipt>,
-    onNavigateToAddReceipt: () -> Unit
+    onNavigateToAddReceipt: () -> Unit,
+    onFormatDate: (dateInMillis: Long) -> String?,
+    onFormatCurrency: (amount: Double, currency: String) -> String
+
 ) {
     if (receipts.isEmpty()) {
         EmptyState(
@@ -111,13 +119,17 @@ fun ReceiptListContent(
         return
     }
 
+    val context = LocalContext.current
+
     LazyColumn {
         items(receipts) { receipt ->
             ReceiptCard(
-                receiptImage = receipt.photoPath,
-                title = "Title",
-                date = receipt.date.toString(),
-                totalAmount = receipt.totalAmount,
+                receiptImage = loadBitmapFromInternalStorage(
+                    context = context,
+                    id = receipt.id.toString()
+                ),
+                date = onFormatDate(receipt.date),
+                totalAmount = onFormatCurrency(receipt.totalAmount, receipt.currency),
                 onReceiptSelected = {}
             )
         }
@@ -125,26 +137,14 @@ fun ReceiptListContent(
 }
 
 @Composable
-fun EmptyStateContent() {
-    EmptyState(
-        image = painterResource(id = R.drawable.illustration_receipt),
-        title = "No receipts registered",
-        message = "You will see your receipts here once you start register them.",
-        buttonText = "Register receipt",
-        onButtonClick = {}
-    )
-}
-
-@Composable
 fun ReceiptCard(
-    receiptImage: String?,
-    title: String,
-    date: String,
-    totalAmount: Double,
+    receiptImage: Bitmap?,
+    date: String?,
+    totalAmount: String,
     onReceiptSelected: () -> Unit = {},
 ) {
     ConstraintLayout {
-        val (card, icon) = createRefs()
+        val (card) = createRefs()
         val padding = 8.dp
 
         Card(
@@ -157,10 +157,10 @@ fun ReceiptCard(
             ConstraintLayout(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                val (image, description) = createRefs()
+                val (imageRef, dateRef, amountRef) = createRefs()
 
                 AsyncImageWithLoader(
-                    modifier = Modifier.constrainAs(image) {
+                    modifier = Modifier.constrainAs(imageRef) {
                         top.linkTo(parent.top)
                         start.linkTo(parent.start)
                         bottom.linkTo(parent.bottom)
@@ -168,31 +168,36 @@ fun ReceiptCard(
                     image = receiptImage
                 )
 
-                Column(
+                Text(
                     modifier = Modifier
                         .padding(16.dp)
-                        .constrainAs(description) {
+                        .constrainAs(dateRef) {
                             top.linkTo(parent.top)
-                            start.linkTo(image.end)
-                            end.linkTo(parent.end)
-                            width = Dimension.fillToConstraints
+                            start.linkTo(imageRef.end)
                         },
-                    verticalArrangement = Arrangement.spacedBy(padding)
-                ) {
-                    Text(
-                        text = title,
-                        style = TextStyle(
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                    text = date.orEmpty(),
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
                     )
+                )
 
-                    Text(
-                        text = date,
-                        style = TextStyle(fontSize = 12.sp)
-                    )
-                }
+                Text(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .constrainAs(amountRef) {
+                            bottom.linkTo(parent.bottom)
+                            end.linkTo(parent.end)
+                        },
+                    text = totalAmount,
+                    style = TextStyle(fontSize = 12.sp)
+                )
             }
         }
     }
+}
+
+fun loadBitmapFromInternalStorage(context: Context, id: String): Bitmap? {
+    val file = File(context.filesDir, id)
+    return if (file.exists()) BitmapFactory.decodeFile(file.absolutePath) else null
 }

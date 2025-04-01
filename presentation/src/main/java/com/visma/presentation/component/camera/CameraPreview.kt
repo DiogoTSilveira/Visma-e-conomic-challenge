@@ -66,7 +66,6 @@ fun CameraPreview(
         }
     }
 
-
     LaunchedEffect(cameraPermissionState) {
         if (cameraPermissionState.status.isGranted) {
             isPermissionGranted = true
@@ -89,7 +88,6 @@ fun CameraPreview(
 }
 
 fun Context.createImageFile(): File {
-    // Create an image file name
     val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
     val imageFileName = "JPEG_" + timeStamp + "_"
     val image = File.createTempFile(

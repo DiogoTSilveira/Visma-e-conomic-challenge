@@ -6,9 +6,10 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "receipts")
 data class ReceiptEntity(
     @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
-    val photoPath: String,
+    val id: Long = 0,
+    val issuer: String,
     val date: Long,
-    val totalAmount: Double
+    val totalAmount: Double,
+    val currency: String
 )
 

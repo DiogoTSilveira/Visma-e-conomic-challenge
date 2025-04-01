@@ -1,8 +1,9 @@
 package com.visma.domain.receipt.model
 
 data class Receipt(
-    val id: Int,
-    val photoPath: String,
+    val id: Long,
+    val issuer: String,
     val date: Long,
-    val totalAmount: Double
+    val totalAmount: Double,
+    val currency: String
 )

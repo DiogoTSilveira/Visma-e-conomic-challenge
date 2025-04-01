@@ -16,7 +16,7 @@ interface ReceiptDao {
     fun getAllReceipts(): Flow<List<ReceiptEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertReceipt(note: ReceiptEntity)
+    suspend fun insertReceipt(note: ReceiptEntity): Long
 
     @Update
     suspend fun updateReceipt(note: ReceiptEntity)

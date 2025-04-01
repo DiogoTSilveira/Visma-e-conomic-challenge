@@ -5,11 +5,12 @@
     <string name="receipts_title">Receipts</string>
 
     <!-- Register -->
+    <string name="issuer_label">Issuer</string>
     <string name="date_label">Date</string>
     <string name="select_date_label">Select a date</string>
     <string name="total_amount_label">Total Amount</string>
     <string name="currency_label">Currency</string>
-    <string name="button_take_photo">Take photo</string>
+    <string name="button_take_photo">Take photo of the receipt</string>
     <string name="button_register_receipt">Register receipt</string>
 
 </resources>
