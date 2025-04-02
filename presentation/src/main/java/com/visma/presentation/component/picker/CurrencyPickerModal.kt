@@ -21,7 +21,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.visma.presentation.R
 import com.visma.presentation.extension.clickableArea
 import java.util.Currency
 
@@ -72,14 +74,19 @@ fun CurrencyPickerModal(
                         .padding(
                             vertical = 8.dp,
                             horizontal = 16.dp
-                        ).clickableArea(currency.currencyCode){
+                        )
+                        .clickableArea(currency.currencyCode) {
                             onCurrencySelected(currency.currencyCode)
                         },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         modifier = Modifier.fillMaxWidth(),
-                        text = "${currency.displayName} (${currency.currencyCode})"
+                        text = stringResource(
+                            R.string.currency_picker_label_format,
+                            currency.displayName,
+                            currency.currencyCode
+                        )
                     )
 
                     RadioButton(

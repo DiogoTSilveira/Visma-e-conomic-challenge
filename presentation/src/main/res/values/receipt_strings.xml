@@ -16,5 +16,6 @@
     <string name="currency_label">Currency</string>
     <string name="button_take_photo">Take photo of the receipt</string>
     <string name="button_register_receipt">Register receipt</string>
+    <string name="currency_picker_label_format">%1$s (%2$s)</string>
 
 </resources>

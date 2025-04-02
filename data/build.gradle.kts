@@ -47,10 +47,10 @@ dependencies {
 
     // Testing
     testImplementation(libs.junit)
-    testImplementation(libs.truth)
-    testImplementation(libs.mockk)
+    testImplementation(libs.mockito)
+    testImplementation(libs.mockito.kotlin)
     testImplementation(libs.coroutines.test)
-    testImplementation(libs.arch.testing)
+    testImplementation(libs.turbine)
 
     // Layer dependency
     implementation(project(":domain"))

@@ -17,7 +17,8 @@ dependencies {
 
     // Testing
     testImplementation(libs.junit)
-    testImplementation(libs.truth)
-    testImplementation(libs.mockk)
+    testImplementation(libs.mockito)
+    testImplementation(libs.mockito.kotlin)
     testImplementation(libs.coroutines.test)
+    testImplementation(libs.turbine)
 }

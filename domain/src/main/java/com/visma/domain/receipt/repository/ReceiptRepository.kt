@@ -8,6 +8,5 @@ interface ReceiptRepository {
     fun getAllReceipts(): Flow<List<Receipt>>
     suspend fun getReceipt(id: Long): Receipt
     suspend fun createReceipt(note: NewReceipt): Long
-    suspend fun updateReceipt(note: Receipt)
     suspend fun deleteReceipt(note: Receipt)
 }
