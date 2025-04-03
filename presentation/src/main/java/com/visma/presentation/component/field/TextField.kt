@@ -17,6 +17,7 @@ fun TextField(
     icon: ImageVector,
     value: String,
     label: String,
+    maxLength: Int = Int.MAX_VALUE,
     onValueChange: (String) -> Unit = {},
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     readOnly: Boolean = false,
@@ -25,7 +26,11 @@ fun TextField(
     OutlinedTextField(
         modifier = modifier.fillMaxWidth(),
         value = value,
-        onValueChange = onValueChange,
+        onValueChange = { value ->
+            if (value.length <= maxLength) {
+                onValueChange(value)
+            }
+        },
         label = { Text(text = label) },
         leadingIcon = {
             Icon(

@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.Dimension
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.visma.domain.receipt.model.Receipt
 import com.visma.presentation.R
@@ -189,6 +190,8 @@ fun ReceiptCard(
                         .constrainAs(issuerRef) {
                             top.linkTo(parent.top)
                             start.linkTo(imageRef.end)
+                            end.linkTo(amountRef.start)
+                            width = Dimension.fillToConstraints
                         },
                     text = issuer,
                     style = TextStyle(
@@ -202,7 +205,7 @@ fun ReceiptCard(
                         .padding(16.dp)
                         .constrainAs(dateRef) {
                             bottom.linkTo(parent.bottom)
-                            start.linkTo(imageRef.end)
+                            end.linkTo(parent.end)
                         },
                     text = stringResource(R.string.receipt_date_format, receiptId, date.orEmpty()),
                     style = TextStyle(fontSize = 14.sp)

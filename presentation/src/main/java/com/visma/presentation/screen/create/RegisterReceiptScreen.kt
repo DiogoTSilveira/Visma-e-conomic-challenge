@@ -21,7 +21,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -43,6 +42,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.visma.presentation.R
+import com.visma.presentation.component.button.Button
 import com.visma.presentation.component.camera.PhotoCamera
 import com.visma.presentation.component.dialog.Dialog
 import com.visma.presentation.component.field.TextField
@@ -57,6 +57,8 @@ import com.visma.presentation.screen.create.RegisterReceiptUiState.Submitting
 import com.visma.presentation.screen.create.RegisterReceiptUiState.Success
 import com.visma.presentation.screen.create.model.FormData
 import com.visma.presentation.theme.VismaEConomicTheme
+
+private const val ISSUER_MAX_LENGTH = 35
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -162,14 +164,10 @@ private fun RegisterReceiptContent(
         }
 
         if (!isViewingDetails) {
-            OutlinedButton(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { takePicture.value = true },
-                content = {
-                    Text(
-                        modifier = Modifier.padding(8.dp),
-                        text = stringResource(R.string.button_take_photo)
-                    )
+            Button(
+                text = stringResource(R.string.button_take_photo),
+                onClick = {
+                    takePicture.value = true
                 }
             )
         }
@@ -178,6 +176,7 @@ private fun RegisterReceiptContent(
             icon = Icons.Default.Receipt,
             value = formData.issuer,
             label = stringResource(R.string.issuer_label),
+            maxLength = ISSUER_MAX_LENGTH,
             onValueChange = { value -> formData = formData.copy(issuer = value) },
             keyboardOptions = KeyboardOptions.Default.copy(
                 capitalization = KeyboardCapitalization.Words
@@ -227,31 +226,19 @@ private fun RegisterReceiptContent(
         )
 
         if (isViewingDetails) {
-            OutlinedButton(
-                modifier = Modifier.fillMaxWidth(),
+            Button(
+                text = stringResource(R.string.button_delete_receipt),
                 onClick = {
                     openConfirmDeleteDialog = true
-                },
-                content = {
-                    Text(
-                        modifier = Modifier.padding(8.dp),
-                        text = stringResource(R.string.button_delete_receipt)
-                    )
                 }
             )
         } else {
-            OutlinedButton(
-                modifier = Modifier.fillMaxWidth(),
+            Button(
+                text = stringResource(R.string.button_register_receipt),
+                enabled = formData.isValid(),
                 onClick = {
                     onSubmit(formData)
-                },
-                content = {
-                    Text(
-                        modifier = Modifier.padding(8.dp),
-                        text = stringResource(R.string.button_register_receipt)
-                    )
-                },
-                enabled = formData.isValid()
+                }
             )
         }
 
