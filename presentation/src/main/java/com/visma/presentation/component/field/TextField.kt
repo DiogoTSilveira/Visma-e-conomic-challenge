@@ -2,6 +2,7 @@ package com.visma.presentation.component.field
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
@@ -19,16 +20,17 @@ fun TextField(
     label: String,
     maxLength: Int = Int.MAX_VALUE,
     onValueChange: (String) -> Unit = {},
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     readOnly: Boolean = false,
-    enabled: Boolean
+    enabled: Boolean = true
 ) {
     OutlinedTextField(
         modifier = modifier.fillMaxWidth(),
         value = value,
-        onValueChange = { value ->
-            if (value.length <= maxLength) {
-                onValueChange(value)
+        onValueChange = { newValue ->
+            if (newValue.length <= maxLength) {
+                onValueChange(newValue)
             }
         },
         label = { Text(text = label) },
@@ -38,6 +40,7 @@ fun TextField(
                 contentDescription = null
             )
         },
+        keyboardActions = keyboardActions,
         keyboardOptions = keyboardOptions,
         shape = RoundedCornerShape(25.dp),
         singleLine = true,

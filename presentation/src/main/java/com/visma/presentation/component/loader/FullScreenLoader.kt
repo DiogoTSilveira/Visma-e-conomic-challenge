@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 
 @Composable
-fun FullScreenLoader(isLoading: Boolean) {
+fun FullScreenLoader(isLoading: Boolean = true) {
     AnimatedVisibility(
         visible = isLoading,
         enter = fadeIn(),

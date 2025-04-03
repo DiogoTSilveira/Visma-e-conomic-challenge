@@ -10,5 +10,6 @@ class GetAllReceiptsUseCase @Inject constructor(
     private val repository: ReceiptRepository,
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) {
-    operator fun invoke() = repository.getAllReceipts().flowOn(dispatcher)
+    operator fun invoke(query: String? = null) =
+        repository.getAllReceipts(query.orEmpty()).flowOn(dispatcher)
 }

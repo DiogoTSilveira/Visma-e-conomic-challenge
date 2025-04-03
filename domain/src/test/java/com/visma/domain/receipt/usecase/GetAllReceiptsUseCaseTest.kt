@@ -21,6 +21,10 @@ class GetAllReceiptsUseCaseTest {
 
     private lateinit var getAllReceiptsUseCase: GetAllReceiptsUseCase
 
+    companion object {
+        private const val EMPTY_TEXT = ""
+    }
+
     private val expectedReceipts = listOf(
         Receipt(
             id = 1,
@@ -44,7 +48,7 @@ class GetAllReceiptsUseCaseTest {
         Dispatchers.setMain(dispatcher)
 
         val repository: ReceiptRepository = mock {
-            on { getAllReceipts() } doReturn flowOf(expectedReceipts)
+            on { getAllReceipts(EMPTY_TEXT) } doReturn flowOf(expectedReceipts)
         }
 
         getAllReceiptsUseCase = GetAllReceiptsUseCase(

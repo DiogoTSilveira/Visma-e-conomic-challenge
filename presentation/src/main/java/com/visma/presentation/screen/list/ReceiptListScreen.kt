@@ -1,46 +1,52 @@
 package com.visma.presentation.screen.list
 
-import android.graphics.Bitmap
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.constraintlayout.compose.Dimension
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.visma.domain.receipt.model.Receipt
 import com.visma.presentation.R
-import com.visma.presentation.component.image.AsyncImageWithLoader
+import com.visma.presentation.component.field.TextField
+import com.visma.presentation.component.loader.FullScreenLoader
 import com.visma.presentation.component.state.EmptyState
-import com.visma.presentation.extension.loadBitmapFromInternalStorage
 import com.visma.presentation.screen.list.ReceiptListUiState.Error
 import com.visma.presentation.screen.list.ReceiptListUiState.Loading
 import com.visma.presentation.screen.list.ReceiptListUiState.Success
@@ -56,12 +62,11 @@ fun ReceiptListScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            MediumTopAppBar(
                 title = {
                     Text(
                         modifier = Modifier.fillMaxWidth(),
-                        text = stringResource(R.string.receipts_title),
-                        textAlign = TextAlign.Center
+                        text = stringResource(R.string.receipts_title)
                     )
                 }
             )
@@ -79,21 +84,22 @@ fun ReceiptListScreen(
     ) { padding ->
         Column(
             modifier = Modifier
-                .padding(padding)
                 .fillMaxSize()
+                .padding(padding),
         ) {
             when (uiState) {
                 is Loading -> {
-                    CircularProgressIndicator(modifier = Modifier.fillMaxSize())
+                    FullScreenLoader()
                 }
 
                 is Success -> {
                     ReceiptListContent(
-                        receipts = (uiState as Success).data,
+                        receipts = (uiState as Success).receipts,
                         onNavigateToAddReceipt = onNavigateToAddReceipt,
-                        onNavigateToEditReceipt = onNavigateToEditReceipt,
+                        onSearchReceipt = viewModel::searchReceipt,
                         onFormatDate = viewModel::formatDate,
                         onFormatCurrency = viewModel::formatCurrency,
+                        onNavigateToEditReceipt = onNavigateToEditReceipt,
                     )
                 }
 
@@ -114,24 +120,47 @@ fun ReceiptListScreen(
 @Composable
 fun ReceiptListContent(
     receipts: List<Receipt>,
-    onNavigateToAddReceipt: () -> Unit,
-    onNavigateToEditReceipt: (id: Long) -> Unit,
+    onSearchReceipt: (query: String) -> Unit,
     onFormatDate: (dateInMillis: Long) -> String?,
-    onFormatCurrency: (amount: Double, currency: String) -> String
-
+    onFormatCurrency: (amount: Double, currency: String) -> String,
+    onNavigateToAddReceipt: () -> Unit,
+    onNavigateToEditReceipt: (id: Long) -> Unit
 ) {
+    var searchQuery by remember { mutableStateOf("") }
+
     if (receipts.isEmpty()) {
-        EmptyState(
-            image = painterResource(id = R.drawable.illustration_check_receipt),
-            title = stringResource(R.string.no_receipts_registered_title),
-            message = stringResource(R.string.no_receipts_registered_message),
-            buttonText = stringResource(R.string.button_register_receipt),
-            onButtonClick = onNavigateToAddReceipt
+        ReceiptsEmptyState(
+            isSearching = searchQuery.isNotEmpty(),
+            onNavigateToAddReceipt = onNavigateToAddReceipt,
+            onClearSearch = {
+                searchQuery = ""
+                onSearchReceipt("")
+            }
         )
         return
     }
 
-    val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    TextField(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        icon = Icons.Default.Search,
+        value = searchQuery,
+        label = "Search",
+        onValueChange = { value -> searchQuery = value },
+        keyboardActions = KeyboardActions(
+            onSearch = {
+                focusManager.clearFocus()
+                keyboardController?.hide()
+                onSearchReceipt(searchQuery)
+            }
+        ),
+        keyboardOptions = KeyboardOptions.Default.copy(
+            capitalization = KeyboardCapitalization.Words,
+            imeAction = ImeAction.Search
+        )
+    )
 
     LazyColumn(
         modifier = Modifier.padding(16.dp),
@@ -139,7 +168,6 @@ fun ReceiptListContent(
     ) {
         items(receipts) { receipt ->
             ReceiptCard(
-                receiptImage = context.loadBitmapFromInternalStorage(id = receipt.id.toString()),
                 receiptId = receipt.id,
                 issuer = receipt.issuer,
                 date = onFormatDate(receipt.date),
@@ -151,8 +179,32 @@ fun ReceiptListContent(
 }
 
 @Composable
+private fun ReceiptsEmptyState(
+    isSearching: Boolean,
+    onClearSearch: () -> Unit,
+    onNavigateToAddReceipt: () -> Unit
+) {
+    if (isSearching) {
+        EmptyState(
+            image = painterResource(id = R.drawable.illustration_receipt),
+            title = "We found no results for your search",
+            buttonText = "Clear search",
+            onButtonClick = onClearSearch
+        )
+        return
+    }
+
+    EmptyState(
+        image = painterResource(id = R.drawable.illustration_receipt),
+        title = stringResource(R.string.no_receipts_registered_title),
+        message = stringResource(R.string.no_receipts_registered_message),
+        buttonText = stringResource(R.string.button_register_receipt),
+        onButtonClick = onNavigateToAddReceipt
+    )
+}
+
+@Composable
 fun ReceiptCard(
-    receiptImage: Bitmap?,
     receiptId: Long,
     issuer: String,
     date: String?,
@@ -170,60 +222,43 @@ fun ReceiptCard(
                 .clickable(onClick = onReceiptSelected),
             elevation = CardDefaults.cardElevation(padding)
         ) {
-            ConstraintLayout(
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                val (imageRef, issuerRef, dateRef, amountRef) = createRefs()
-
-                AsyncImageWithLoader(
-                    modifier = Modifier.constrainAs(imageRef) {
-                        top.linkTo(parent.top)
-                        start.linkTo(parent.start)
-                        bottom.linkTo(parent.bottom)
-                    },
-                    image = receiptImage
-                )
-
-                Text(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .constrainAs(issuerRef) {
-                            top.linkTo(parent.top)
-                            start.linkTo(imageRef.end)
-                            end.linkTo(amountRef.start)
-                            width = Dimension.fillToConstraints
-                        },
-                    text = issuer,
-                    style = TextStyle(
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        modifier = Modifier.weight(1f),
+                        text = issuer,
+                        style = TextStyle(
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     )
-                )
 
-                Text(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .constrainAs(dateRef) {
-                            bottom.linkTo(parent.bottom)
-                            end.linkTo(parent.end)
-                        },
-                    text = stringResource(R.string.receipt_date_format, receiptId, date.orEmpty()),
-                    style = TextStyle(fontSize = 14.sp)
-                )
-
-                Text(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .constrainAs(amountRef) {
-                            top.linkTo(parent.top)
-                            end.linkTo(parent.end)
-                        },
-                    text = totalAmount,
-                    style = TextStyle(
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
+                    Text(
+                        modifier = Modifier.weight(1f, false),
+                        text = totalAmount,
+                        style = TextStyle(
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     )
-                )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = stringResource(R.string.receipt_format, receiptId))
+
+                    Text(text = date.orEmpty())
+                }
             }
         }
     }

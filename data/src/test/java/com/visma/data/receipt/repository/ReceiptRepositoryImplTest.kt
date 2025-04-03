@@ -28,6 +28,10 @@ class ReceiptRepositoryImplTest {
     private lateinit var repository: ReceiptRepositoryImpl
     private lateinit var dao: ReceiptDao
 
+    companion object {
+        private const val EMPTY_TEXT = ""
+    }
+
     private val expectedReceiptEntities = listOf(
         ReceiptEntity(
             id = 1,
@@ -69,7 +73,7 @@ class ReceiptRepositoryImplTest {
         Dispatchers.setMain(dispatcher)
 
         dao = mock {
-            on { getAllReceipts() } doReturn flowOf(expectedReceiptEntities)
+            on { getAllReceipts(EMPTY_TEXT) } doReturn flowOf(expectedReceiptEntities)
         }
 
         repository = ReceiptRepositoryImpl(dao)
@@ -77,7 +81,7 @@ class ReceiptRepositoryImplTest {
 
     @Test
     fun `getAllReceipts should return flow of receipts successfully`() = runTest {
-        repository.getAllReceipts().test {
+        repository.getAllReceipts(EMPTY_TEXT).test {
             val item = awaitItem()
             assertEquals(expectedReceipt, item)
             awaitComplete()

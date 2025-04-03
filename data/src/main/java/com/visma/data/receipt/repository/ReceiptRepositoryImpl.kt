@@ -14,8 +14,8 @@ class ReceiptRepositoryImpl @Inject constructor(
     private val receiptDao: ReceiptDao
 ) : ReceiptRepository {
 
-    override fun getAllReceipts(): Flow<List<Receipt>> =
-        receiptDao.getAllReceipts().mapToReceiptList()
+    override fun getAllReceipts(query: String): Flow<List<Receipt>> =
+        receiptDao.getAllReceipts(query).mapToReceiptList()
 
     override suspend fun getReceipt(id: Long): Receipt =
         receiptDao.getReceipt(id).mapToReceipt()

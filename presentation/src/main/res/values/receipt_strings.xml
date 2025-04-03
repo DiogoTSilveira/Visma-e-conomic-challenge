@@ -3,7 +3,7 @@
 
     <!-- List -->
     <string name="receipts_title">Receipts</string>
-    <string name="receipt_date_format">Receipt %1$s • %2$s</string>
+    <string name="receipt_format">Receipt %1$s</string>
     <string name="no_receipts_registered_title">No receipts registered</string>
     <string name="no_receipts_registered_message">You will see your receipts here once you start register them.</string>
 

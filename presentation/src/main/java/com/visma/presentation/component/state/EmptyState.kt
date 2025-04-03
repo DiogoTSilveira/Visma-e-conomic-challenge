@@ -61,7 +61,7 @@ fun EmptyState(
                         text = title,
                         textAlign = TextAlign.Center,
                         style = TextStyle(
-                            fontSize = 16.sp,
+                            fontSize = 24.sp,
                             fontWeight = FontWeight.Bold
                         )
                     )
@@ -70,7 +70,7 @@ fun EmptyState(
                         Text(
                             text = it,
                             textAlign = TextAlign.Center,
-                            style = TextStyle(fontSize = 12.sp)
+                            style = TextStyle(fontSize = 18.sp)
                         )
                     }
                 }
