@@ -1,7 +1,6 @@
 package com.visma.data.database.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -20,7 +19,7 @@ interface ReceiptDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertReceipt(note: ReceiptEntity): Long
 
-    @Delete
-    suspend fun deleteReceipt(note: ReceiptEntity)
+    @Query("DELETE FROM receipts WHERE id = :id")
+    suspend fun deleteReceipt(id: Long)
 
 }

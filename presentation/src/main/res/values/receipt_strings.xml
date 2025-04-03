@@ -16,6 +16,13 @@
     <string name="currency_label">Currency</string>
     <string name="button_take_photo">Take photo of the receipt</string>
     <string name="button_register_receipt">Register receipt</string>
+    <string name="button_delete_receipt">Delete receipt</string>
     <string name="currency_picker_label_format">%1$s (%2$s)</string>
+
+    <!-- Dialog -->
+    <string name="delete_receipt_title">Delete receipt?</string>
+    <string name="delete_receipt_message">Once you confirm, this receipt will be deleted from your list</string>
+    <string name="delete_button_label">Delete</string>
+    <string name="cancel_button_label">Cancel</string>
 
 </resources>

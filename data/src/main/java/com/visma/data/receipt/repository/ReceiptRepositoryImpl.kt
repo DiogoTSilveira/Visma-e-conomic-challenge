@@ -20,9 +20,9 @@ class ReceiptRepositoryImpl @Inject constructor(
     override suspend fun getReceipt(id: Long): Receipt =
         receiptDao.getReceipt(id).mapToReceipt()
 
-    override suspend fun createReceipt(note: NewReceipt) =
-        receiptDao.insertReceipt(note.mapToReceiptEntity())
+    override suspend fun createReceipt(receipt: NewReceipt) =
+        receiptDao.insertReceipt(receipt.mapToReceiptEntity())
 
-    override suspend fun deleteReceipt(note: Receipt) =
-        receiptDao.deleteReceipt(note.mapToReceiptEntity())
+    override suspend fun deleteReceipt(id: Long) =
+        receiptDao.deleteReceipt(id)
 }

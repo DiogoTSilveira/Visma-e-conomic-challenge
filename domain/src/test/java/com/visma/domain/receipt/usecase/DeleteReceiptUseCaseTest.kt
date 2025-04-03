@@ -36,10 +36,10 @@ class DeleteReceiptUseCaseTest {
         val receipt = mock<Receipt>()
 
         // When
-        deleteReceiptUseCase.invoke(receipt)
+        deleteReceiptUseCase.invoke(receipt.id)
 
         // Then
-        verify(repository).deleteReceipt(receipt)
+        verify(repository).deleteReceipt(receipt.id)
         verifyNoMoreInteractions(repository)
     }
 }

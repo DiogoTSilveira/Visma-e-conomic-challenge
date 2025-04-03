@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.visma.domain.receipt.usecase.CreateReceiptUseCase
+import com.visma.domain.receipt.usecase.DeleteReceiptUseCase
 import com.visma.domain.receipt.usecase.FormatDateUseCase
 import com.visma.domain.receipt.usecase.GetReceiptUseCase
 import com.visma.presentation.extension.loadBitmapFromInternalStorage
@@ -33,6 +34,7 @@ class RegisterReceiptViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val getReceiptUseCase: GetReceiptUseCase,
     private val createReceiptUseCase: CreateReceiptUseCase,
+    private val deleteReceiptUseCase: DeleteReceiptUseCase,
     private val formatDateUseCase: FormatDateUseCase
 ) : ViewModel() {
 
@@ -98,6 +100,20 @@ class RegisterReceiptViewModel @Inject constructor(
                     fileName = receiptId.toString()
                 )
 
+                updateState(Success)
+            } catch (exception: Exception) {
+                Log.e(RegisterReceiptViewModel::class.java.simpleName, exception.message.orEmpty())
+                updateState(Error(exception.message.orEmpty()))
+            }
+        }
+    }
+
+    fun delete(receiptId: Long) {
+        viewModelScope.launch {
+            updateState(Submitting)
+
+            try {
+                deleteReceiptUseCase.invoke(receiptId)
                 updateState(Success)
             } catch (exception: Exception) {
                 Log.e(RegisterReceiptViewModel::class.java.simpleName, exception.message.orEmpty())

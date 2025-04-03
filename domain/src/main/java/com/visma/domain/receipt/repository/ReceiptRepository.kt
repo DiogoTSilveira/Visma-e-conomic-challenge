@@ -7,6 +7,6 @@ import kotlinx.coroutines.flow.Flow
 interface ReceiptRepository {
     fun getAllReceipts(): Flow<List<Receipt>>
     suspend fun getReceipt(id: Long): Receipt
-    suspend fun createReceipt(note: NewReceipt): Long
-    suspend fun deleteReceipt(note: Receipt)
+    suspend fun createReceipt(receipt: NewReceipt): Long
+    suspend fun deleteReceipt(id: Long)
 }

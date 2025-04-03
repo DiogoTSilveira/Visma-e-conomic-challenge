@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.visma.presentation.R
 import com.visma.presentation.component.camera.PhotoCamera
+import com.visma.presentation.component.dialog.Dialog
 import com.visma.presentation.component.field.TextField
 import com.visma.presentation.component.image.AsyncImageWithLoader
 import com.visma.presentation.component.picker.CurrencyPickerModal
@@ -111,7 +112,8 @@ fun RegisterReceiptScreen(
                     modifier = Modifier.padding(padding),
                     data = data,
                     onFormatDate = viewModel::formatDate,
-                    onSubmit = viewModel::submit
+                    onSubmit = viewModel::submit,
+                    onDelete = viewModel::delete
                 )
             }
 
@@ -120,12 +122,14 @@ fun RegisterReceiptScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RegisterReceiptContent(
     modifier: Modifier,
     data: FormData,
     onFormatDate: (dateInMillis: Long?) -> String?,
-    onSubmit: (data: FormData) -> Unit
+    onSubmit: (data: FormData) -> Unit,
+    onDelete: (id: Long) -> Unit,
 ) {
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
@@ -135,6 +139,7 @@ private fun RegisterReceiptContent(
     val isViewingDetails = formData.receiptId != null
 
     var showDatePicker by remember { mutableStateOf(false) }
+    var openConfirmDeleteDialog by remember { mutableStateOf(false) }
     var showCurrencyPicker by remember { mutableStateOf(false) }
     val takePicture = remember { mutableStateOf(false) }
 
@@ -221,19 +226,34 @@ private fun RegisterReceiptContent(
             enabled = !isViewingDetails
         )
 
-        OutlinedButton(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = {
-                onSubmit(formData)
-            },
-            content = {
-                Text(
-                    modifier = Modifier.padding(8.dp),
-                    text = stringResource(R.string.button_register_receipt)
-                )
-            },
-            enabled = formData.isValid()
-        )
+        if (isViewingDetails) {
+            OutlinedButton(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    openConfirmDeleteDialog = true
+                },
+                content = {
+                    Text(
+                        modifier = Modifier.padding(8.dp),
+                        text = stringResource(R.string.button_delete_receipt)
+                    )
+                }
+            )
+        } else {
+            OutlinedButton(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    onSubmit(formData)
+                },
+                content = {
+                    Text(
+                        modifier = Modifier.padding(8.dp),
+                        text = stringResource(R.string.button_register_receipt)
+                    )
+                },
+                enabled = formData.isValid()
+            )
+        }
 
         Spacer(modifier = Modifier.height(32.dp))
     }
@@ -264,6 +284,17 @@ private fun RegisterReceiptContent(
         )
     }
 
+    if (openConfirmDeleteDialog) {
+        Dialog(
+            title = stringResource(R.string.delete_receipt_title),
+            text = stringResource(R.string.delete_receipt_message),
+            confirmButtonText = stringResource(R.string.delete_button_label),
+            dismissButtonText = stringResource(R.string.cancel_button_label),
+            onConfirm = { formData.receiptId?.let { onDelete(it) } },
+            onDismiss = { openConfirmDeleteDialog = false }
+        )
+    }
+
     PhotoCamera(
         modifier = Modifier.fillMaxSize(),
         takePicture = takePicture,
@@ -282,7 +313,8 @@ fun RegisterReceiptContentPreview() {
             modifier = Modifier.padding(16.dp),
             data = FormData(),
             onFormatDate = { "31/03/2025" },
-            onSubmit = {}
+            onSubmit = {},
+            onDelete = {},
         )
     }
 }

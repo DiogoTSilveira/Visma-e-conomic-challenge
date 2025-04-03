@@ -137,9 +137,9 @@ class ReceiptRepositoryImplTest {
         val receiptEntity = receipt.mapToReceiptEntity()
 
         // When
-        repository.deleteReceipt(receipt)
+        repository.deleteReceipt(receipt.id)
 
         // Then
-        verify(dao).deleteReceipt(receiptEntity)
+        verify(dao).deleteReceipt(receiptEntity.id)
     }
 }
