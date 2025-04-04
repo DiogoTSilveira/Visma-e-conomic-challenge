@@ -17,7 +17,7 @@ interface ReceiptDao {
     suspend fun getReceipt(id: Long): ReceiptEntity
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertReceipt(note: ReceiptEntity): Long
+    suspend fun insertReceipt(receipt: ReceiptEntity): Long
 
     @Query("DELETE FROM receipts WHERE id = :id")
     suspend fun deleteReceipt(id: Long)
