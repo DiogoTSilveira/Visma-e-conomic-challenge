@@ -25,4 +25,8 @@
     <string name="delete_button_label">Delete</string>
     <string name="cancel_button_label">Cancel</string>
 
+    <!-- Error -->
+    <string name="an_error_occurred_message">An error occurred. Please try again</string>
+    <string name="button_try_again">Try again</string>
+
 </resources>

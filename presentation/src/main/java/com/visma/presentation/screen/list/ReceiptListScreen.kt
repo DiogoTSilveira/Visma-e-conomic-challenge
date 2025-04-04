@@ -19,7 +19,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -104,12 +103,11 @@ fun ReceiptListScreen(
                 }
 
                 is Error -> {
-                    val errorMessage = (uiState as Error).message
-
-                    Text(
-                        modifier = Modifier.padding(16.dp),
-                        text = errorMessage,
-                        color = MaterialTheme.colorScheme.error
+                    EmptyState(
+                        image = painterResource(id = R.drawable.illustration_error),
+                        title = stringResource(R.string.an_error_occurred_message),
+                        buttonText = stringResource(R.string.button_try_again),
+                        onButtonClick = viewModel::retry
                     )
                 }
             }
