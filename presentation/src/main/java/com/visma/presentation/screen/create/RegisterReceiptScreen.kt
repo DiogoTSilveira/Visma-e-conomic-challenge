@@ -276,7 +276,7 @@ private fun RegisterReceiptContent(
             title = stringResource(R.string.delete_receipt_title),
             text = stringResource(R.string.delete_receipt_message),
             confirmButtonText = stringResource(R.string.delete_button_label),
-            dismissButtonText = stringResource(R.string.cancel_button_label),
+            dismissButtonText = stringResource(R.string.button_cancel),
             onConfirm = { formData.receiptId?.let { onDelete(it) } },
             onDismiss = { openConfirmDeleteDialog = false }
         )

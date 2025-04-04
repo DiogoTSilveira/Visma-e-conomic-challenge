@@ -1,7 +1,6 @@
 package com.visma.presentation.component.camera
 
 import android.Manifest
-import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,10 +22,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.visma.presentation.component.loader.FullScreenLoader
-import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.visma.presentation.extension.createImageFile
 import java.util.Objects
 
 @androidx.annotation.OptIn(ExperimentalGetImage::class)
@@ -85,15 +81,4 @@ fun CameraPreview(
 
         FullScreenLoader(isLoading = true)
     }
-}
-
-fun Context.createImageFile(): File {
-    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-    val imageFileName = "JPEG_" + timeStamp + "_"
-    val image = File.createTempFile(
-        imageFileName,
-        ".jpg",
-        externalCacheDir
-    )
-    return image
 }

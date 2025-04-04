@@ -23,7 +23,8 @@
     <string name="delete_receipt_title">Delete receipt?</string>
     <string name="delete_receipt_message">Once you confirm, this receipt will be deleted from your list</string>
     <string name="delete_button_label">Delete</string>
-    <string name="cancel_button_label">Cancel</string>
+    <string name="button_ok">OK</string>
+    <string name="button_cancel">Cancel</string>
 
     <!-- Error -->
     <string name="an_error_occurred_message">An error occurred. Please try again</string>
